@@ -6,5 +6,5 @@ Ein einfaches Skript, um temporäre E-Mail-Adressen von [temp-mail.org](https://
 
 1. Repository klonen:
    ```bash
-   git clone <Ihre-Repository-URL>
+   git clone <https://github.com/devniqq/temp-mail-verify/tree/main>
    cd temp-mail-scraper
