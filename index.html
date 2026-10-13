@@ -12,7 +12,7 @@
     <header class="bg-gray-800 border-b border-gray-700 p-4 shadow-md">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold text-blue-400">⚡ Echte Wegwerf-Mail</h1>
-            <span class="text-xs bg-green-600 text-white px-2.5 py-1 rounded-full">Live auf GitHub Pages</span>
+            <span class="text-xs bg-green-600 text-white px-2.5 py-1 rounded-full">GitHub Pages Live</span>
         </div>
     </header>
 
@@ -47,35 +47,38 @@
 
     <!-- Footer -->
     <footer class="bg-gray-800 border-t border-gray-700 py-4 text-center text-xs text-gray-500">
-        Gehostet über GitHub Pages &bull; Echte API Anbindung
+        Gehostet über GitHub Pages &bull; Mit CORS-Proxy
     </footer>
 
-    <!-- JavaScript Logik mit echter API -->
+    <!-- JavaScript Logik mit Proxy -->
     <script>
         let currentEmail = "";
         let login = "";
         let domain = "";
+        
+        // Wir nutzen einen öffentlichen Proxy, um CORS-Blockaden zu umgehen
+        const proxyUrl = "https://api.allorigins.win/raw?url=";
 
-        // Echte E-Mail-Adresse beim Laden der Seite generieren
         async function generateEmail() {
             try {
-                const response = await fetch('https://www.1secmail.com/api/v1/?action=genRandomMailbox&count=1');
+                const targetUrl = encodeURIComponent("https://www.1secmail.com/api/v1/?action=genRandomMailbox&count=1");
+                const response = await fetch(proxyUrl + targetUrl);
                 const data = await response.json();
+                
                 currentEmail = data[0];
                 document.getElementById("email-box").value = currentEmail;
                 
-                // Login und Domain für Postfach-Abfragen trennen
                 const parts = currentEmail.split('@');
                 login = parts[0];
                 domain = parts[1];
                 
                 checkInbox();
             } catch (error) {
-                document.getElementById("email-box").value = "Fehler beim Laden der Adresse";
+                document.getElementById("email-box").value = "Fehler beim Laden (CORS/Netzwerk)";
+                console.error(error);
             }
         }
 
-        // Kopieren-Funktion
         function copyEmail() {
             navigator.clipboard.writeText(currentEmail);
             const alertBox = document.getElementById("copy-alert");
@@ -83,14 +86,14 @@
             setTimeout(() => alertBox.classList.add("hidden"), 2000);
         }
 
-        // Posteingang auf neue Nachrichten prüfen
         async function checkInbox() {
             if (!login || !domain) return;
             const inboxDiv = document.getElementById("inbox");
             inboxDiv.innerHTML = "Prüfe Posteingang...";
 
             try {
-                const response = await fetch(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`);
+                const targetUrl = encodeURIComponent(`https://www.1secmail.com/api/v1/?action=getMessages&login=${login}&domain=${domain}`);
+                const response = await fetch(proxyUrl + targetUrl);
                 const messages = await response.json();
 
                 if (messages.length === 0) {
@@ -98,7 +101,7 @@
                 } else {
                     let html = '<ul class="w-full space-y-2">';
                     for (let msg of messages) {
-                        html += `<li class="bg-gray-800 p-2.5 rounded border border-gray-700 cursor-pointer hover:bg-gray-700 transition" onclick="readMessage(${msg.id})">
+                        html += `<li class="bg-gray-800 p-2.5 rounded border border-gray-700 cursor-pointer hover:bg-gray-700 transition" onclick="readMessage('${msg.id}')">
                             <div class="text-xs text-blue-400">Von: ${msg.from}</div>
                             <div class="font-medium text-white">${msg.subject}</div>
                         </li>`;
@@ -111,13 +114,14 @@
             }
         }
 
-        // Einzelne Nachricht lesen
         async function readMessage(id) {
             const inboxDiv = document.getElementById("inbox");
             inboxDiv.innerHTML = "Lade Nachricht...";
             try {
-                const response = await fetch(`https://www.1secmail.com/api/v1/?action=readMessage&login=${login}&domain=${domain}&id=${id}`);
+                const targetUrl = encodeURIComponent(`https://www.1secmail.com/api/v1/?action=readMessage&login=${login}&domain=${domain}&id=${id}`);
+                const response = await fetch(proxyUrl + targetUrl);
                 const msg = await response.json();
+                
                 inboxDiv.innerHTML = `
                     <div class="w-full text-left">
                         <button onclick="checkInbox()" class="text-xs bg-gray-700 hover:bg-gray-600 px-2.5 py-1 rounded mb-3 text-white">&larr; Zurück zum Posteingang</button>
@@ -131,7 +135,6 @@
             }
         }
 
-        // Start beim Laden
         window.onload = generateEmail;
     </script>
 </body>
